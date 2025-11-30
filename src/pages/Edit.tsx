@@ -1,8 +1,7 @@
+import AdOperator from "@/components/AdOperator";
 
 const Edit = () => {
-  return (
-    <div>Edit</div>
-  )
-}
+  return <AdOperator />;
+};
 
 export default Edit;

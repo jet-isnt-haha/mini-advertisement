@@ -1,17 +1,19 @@
 import { Button, Dropdown, Menu } from "@arco-design/web-react";
 import { useState } from "react";
 import DeleteModal from "./DeleteModal";
+import { useAdOperator } from "@/contexts/AdOperator/useAdOperator";
 
 const MoreOperate = () => {
+  const { openAdOperator } = useAdOperator();
   const [deleteModalVisible, setDeleteModalVisible] = useState(false);
 
   const handleMenuClick = (key: string) => {
     if (key === "1") {
       // 编辑操作
-      console.log("编辑操作");
+      openAdOperator();
     } else if (key === "2") {
       // 复制操作
-      console.log("复制操作");
+      openAdOperator();
     } else if (key === "3") {
       // 删除操作
       setDeleteModalVisible(true);
