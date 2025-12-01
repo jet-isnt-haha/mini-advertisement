@@ -1,11 +1,12 @@
 import { createContext, useState, type ReactNode } from "react";
-import AdOperator, { type AdFormData } from "@/components/AdOperator";
+import AdOperator from "@/components/AdOperator";
 import Storage from "@/utils/storageHelper";
+import type { advertisementMeta } from "@/types";
 
 interface AdOperatorContextType {
-  openAdOperator: (data?: AdFormData) => void;
+  openAdOperator: (data?: advertisementMeta) => void;
   closeAdOperator: () => void;
-  advertisementList: AdFormData[];
+  advertisementList: advertisementMeta[];
   refreshAdList: () => void;
 }
 
@@ -15,14 +16,14 @@ const AdOperatorContext = createContext<AdOperatorContextType | undefined>(
 
 export const AdOperatorProvider = ({ children }: { children: ReactNode }) => {
   const [visible, setVisible] = useState(false);
-  const [initialData, setInitialData] = useState<AdFormData | undefined>(
+  const [initialData, setInitialData] = useState<advertisementMeta | undefined>(
     undefined
   );
 
-  const [advertisementList, setAdvertisementList] = useState<AdFormData[]>(
-    () => Storage.getItem<AdFormData[]>("AD-LIST") ?? []
-  );
-  const openAdOperator = (data?: AdFormData) => {
+  const [advertisementList, setAdvertisementList] = useState<
+    advertisementMeta[]
+  >(() => Storage.getItem<advertisementMeta[]>("AD-LIST") ?? []);
+  const openAdOperator = (data?: advertisementMeta) => {
     setInitialData(data);
     setVisible(true);
   };
@@ -32,7 +33,7 @@ export const AdOperatorProvider = ({ children }: { children: ReactNode }) => {
     setInitialData(undefined);
   };
   const refreshAdList = () => {
-    setAdvertisementList(Storage.getItem<AdFormData[]>("AD-LIST") ?? []);
+    setAdvertisementList(Storage.getItem<advertisementMeta[]>("AD-LIST") ?? []);
   };
 
   return (
@@ -50,8 +51,17 @@ export const AdOperatorProvider = ({ children }: { children: ReactNode }) => {
         initialValues={initialData}
         onClose={closeAdOperator}
         onSubmit={(data) => {
-          const existingData = Storage.getItem<AdFormData[]>("AD-LIST") ?? [];
+          const existingData =
+            Storage.getItem<advertisementMeta[]>("AD-LIST") ?? [];
           Storage.setItem("AD-LIST", [...existingData, data]);
+          const Data = Storage.getItem<advertisementMeta[]>("AD-LIST");
+          Data?.sort(
+            (a, b) =>
+              b.price +
+              (b.price + b.clickCount) * 0.44 -
+              (a.price + (a.price + a.clickCount) * 0.44)
+          );
+          Storage.setItem("AD-LIST", Data);
           // 直接更新状态，不需要事件
           refreshAdList();
           closeAdOperator();

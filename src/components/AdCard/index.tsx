@@ -31,8 +31,8 @@ const AdCard = ({
         <div className="text-gray-300">{publisher}</div>
         <div className="flex-1 overflow-hidden">{content}</div>
         <div className="flex justify-between mt-auto">
-          <div className="text-red-500">热度:{price}</div>
-          <div className="text-blue-500">出价:{clickCount}</div>
+          <div className="text-red-500">热度:{clickCount}</div>
+          <div className="text-blue-500">出价:{price}</div>
         </div>
       </div>
     </Card>

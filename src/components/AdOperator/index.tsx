@@ -1,3 +1,4 @@
+import type { advertisementMeta } from "@/types";
 import {
   Button,
   Form,
@@ -11,19 +12,11 @@ import { useState } from "react";
 const FormItem = Form.Item;
 const TextArea = Input.TextArea;
 
-export interface AdFormData {
-  title: string;
-  publisher: string;
-  content: string;
-  redirectUrl: string;
-  price: number;
-}
-
 interface AdOperatorProps {
   visible?: boolean;
   onClose?: () => void;
-  onSubmit?: (data: AdFormData) => void;
-  initialValues?: AdFormData;
+  onSubmit?: (data: advertisementMeta) => void;
+  initialValues?: advertisementMeta;
 }
 
 const AdOperator = ({
@@ -32,13 +25,14 @@ const AdOperator = ({
   onSubmit,
   initialValues,
 }: AdOperatorProps) => {
-  const [form] = Form.useForm<AdFormData>();
+  const [form] = Form.useForm<advertisementMeta>();
   const [loading, setLoading] = useState(false);
 
   const handleSubmit = async () => {
     try {
       setLoading(true);
       const values = await form.validate();
+      values.clickCount = Math.random() * 50;
       console.log(values);
       onSubmit?.(values);
       form.resetFields();
