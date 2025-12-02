@@ -7,7 +7,7 @@ import {
   Modal,
   Space,
 } from "@arco-design/web-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 const FormItem = Form.Item;
 const TextArea = Input.TextArea;
@@ -28,11 +28,21 @@ const AdOperator = ({
   const [form] = Form.useForm<advertisementMeta>();
   const [loading, setLoading] = useState(false);
 
+  // 监听 initialValues 变化，更新表单
+  useEffect(() => {
+    if (visible && initialValues) {
+      form.setFieldsValue(initialValues);
+    } else if (visible && !initialValues) {
+      form.resetFields();
+    }
+  }, [visible, initialValues, form]);
+
   const handleSubmit = async () => {
     try {
       setLoading(true);
       const values = await form.validate();
-      values.clickCount = Math.random() * 50;
+      values.clickCount = initialValues?.clickCount ?? Math.random() * 50;
+      values.id = initialValues?.id || Date.now().toString();
       console.log(values);
       onSubmit?.(values);
       form.resetFields();
@@ -51,7 +61,7 @@ const AdOperator = ({
   return (
     <Modal
       visible={visible}
-      title="编辑广告"
+      title={initialValues ? "编辑广告" : "新建广告"}
       onCancel={handleCancel}
       footer={null}
       style={{ width: 600 }}
@@ -61,7 +71,6 @@ const AdOperator = ({
         layout="horizontal"
         labelAlign="right"
         requiredSymbol={false}
-        initialValues={initialValues}
       >
         <FormItem
           label="广告标题"
@@ -86,7 +95,7 @@ const AdOperator = ({
         </FormItem>
         <FormItem
           label="落地页"
-          field="landingPage"
+          field="redirectUrl"
           rules={[{ required: true, message: "请输入落地页" }]}
         >
           <TextArea placeholder="请输入落地页" rows={2} />

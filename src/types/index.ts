@@ -1,4 +1,5 @@
 export interface advertisementMeta {
+    id:string;
     title:string;
     publisher:string;
     content:string;

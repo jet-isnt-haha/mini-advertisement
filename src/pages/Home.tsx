@@ -14,14 +14,7 @@ const Home = () => {
       </Button>
       <div className=" space-x-4 flex flex-row flex-wrap mt-8 gap-y-8">
         {advertisementList.map((ad: advertisementMeta) => (
-          <AdCard
-            key={ad.title}
-            title={ad.title}
-            content={ad.content}
-            publisher={ad.publisher}
-            price={ad.price}
-            clickCount={ad.clickCount}
-          />
+          <AdCard key={ad.id} {...ad} />
         ))}
       </div>
     </div>

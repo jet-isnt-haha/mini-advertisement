@@ -2,18 +2,20 @@ import { Button, Dropdown, Menu } from "@arco-design/web-react";
 import { useState } from "react";
 import DeleteModal from "./DeleteModal";
 import { useAdOperator } from "@/contexts/AdOperator/useAdOperator";
+import type { advertisementMeta } from "@/types";
 
-const MoreOperate = () => {
-  const { openAdOperator } = useAdOperator();
+const MoreOperate = (config: advertisementMeta) => {
+  const { openAdOperator, deleteAdFromAdList } = useAdOperator();
   const [deleteModalVisible, setDeleteModalVisible] = useState(false);
 
-  const handleMenuClick = (key: string) => {
+  const handleMenuClick = (key: string, e: React.MouseEvent) => {
+    e.stopPropagation();
     if (key === "1") {
       // 编辑操作
-      openAdOperator();
+      openAdOperator(config);
     } else if (key === "2") {
       // 复制操作
-      openAdOperator();
+      openAdOperator({ ...config, id: Date.now().toString() });
     } else if (key === "3") {
       // 删除操作
       setDeleteModalVisible(true);
@@ -31,7 +33,14 @@ const MoreOperate = () => {
   return (
     <>
       <Dropdown droplist={OperateList} position="bl" trigger="click">
-        <Button shape="round" type="primary">
+        <Button
+          shape="round"
+          type="primary"
+          onClick={(e: Event) => {
+            // 阻止按钮点击冒泡到父卡片
+            e.stopPropagation();
+          }}
+        >
           操作
         </Button>
       </Dropdown>
@@ -39,7 +48,7 @@ const MoreOperate = () => {
         visible={deleteModalVisible}
         onClose={() => setDeleteModalVisible(false)}
         onOk={() => {
-          console.log("确认删除");
+          deleteAdFromAdList(config.id);
           setDeleteModalVisible(false);
         }}
       />
