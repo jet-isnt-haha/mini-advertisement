@@ -14,6 +14,7 @@ export const getAllAdsApi = async (): Promise<advertisementMeta[]> => {
   const response = await requestGet<ApiResponse<advertisementMeta[]>>(
     GET_ALL_ADS
   );
+  console.log(response);
   return response.data;
 };
 
@@ -39,13 +40,15 @@ export const editApi = async (data: any): Promise<advertisementMeta> => {
 
 // 删除广告 (使用 POST)
 const DELETE_AD = "/delete_ad";
-export const deleteApi = (data: { id: string }) => {
-  return reuqestPost(DELETE_AD, data);
+export const deleteApi = (id: advertisementMeta["id"]) => {
+  return reuqestPost(DELETE_AD, { id });
 };
 
 // 获取单个广告
 const QUERY_AD_PREFIX = "/advertise";
-export const advertiseApi = async (id: string): Promise<advertisementMeta> => {
+export const advertiseApi = async (
+  id: advertisementMeta["id"]
+): Promise<advertisementMeta> => {
   const response = await requestGet<ApiResponse<advertisementMeta>>(
     `${QUERY_AD_PREFIX}/${id}`
   );

@@ -2,7 +2,7 @@ import { Modal } from "@arco-design/web-react";
 interface DeleteModalProps {
   visible: boolean;
   onClose: () => void;
-  onOk: () => void;
+  onOk: (e?: MouseEvent) => void;
 }
 
 const DeleteModal = ({ visible, onClose, onOk }: DeleteModalProps) => {

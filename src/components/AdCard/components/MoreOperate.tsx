@@ -9,7 +9,6 @@ const MoreOperate = (config: advertisementMeta) => {
   const [deleteModalVisible, setDeleteModalVisible] = useState(false);
 
   const handleMenuClick = (key: string, e: React.MouseEvent) => {
-    e.stopPropagation();
     if (key === "1") {
       // 编辑操作
       openAdOperator(config);
@@ -31,28 +30,24 @@ const MoreOperate = (config: advertisementMeta) => {
   );
 
   return (
-    <>
+    <div onClick={(e) => e.stopPropagation()}>
       <Dropdown droplist={OperateList} position="bl" trigger="click">
-        <Button
-          shape="round"
-          type="primary"
-          onClick={(e: Event) => {
-            // 阻止按钮点击冒泡到父卡片
-            e.stopPropagation();
-          }}
-        >
+        {/* 这个按钮上的 stopPropagation 现在可以移除了，因为父 div 会处理 */}
+        <Button shape="round" type="primary">
           操作
         </Button>
       </Dropdown>
       <DeleteModal
         visible={deleteModalVisible}
-        onClose={() => setDeleteModalVisible(false)}
+        onClose={() => {
+          setDeleteModalVisible(false);
+        }}
         onOk={() => {
           deleteAdFromAdList(config.id);
           setDeleteModalVisible(false);
         }}
       />
-    </>
+    </div>
   );
 };
 
