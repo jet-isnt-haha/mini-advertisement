@@ -20,7 +20,9 @@ export const getAllAdsApi = async (): Promise<advertisementMeta[]> => {
 
 // 创建广告
 const CREATE_AD = "/create_ad";
-export const createApi = async (data: any): Promise<advertisementMeta> => {
+export const createApi = async (
+  data: advertisementMeta
+): Promise<advertisementMeta> => {
   const response = await reuqestPost<ApiResponse<advertisementMeta>>(
     CREATE_AD,
     data
@@ -30,7 +32,9 @@ export const createApi = async (data: any): Promise<advertisementMeta> => {
 
 // 编辑广告
 const EDIT_AD = "/edit_ad";
-export const editApi = async (data: any): Promise<advertisementMeta> => {
+export const editApi = async (
+  data: advertisementMeta
+): Promise<advertisementMeta> => {
   const response = await reuqestPost<ApiResponse<advertisementMeta>>(
     EDIT_AD,
     data
@@ -57,12 +61,12 @@ export const advertiseApi = async (
 
 // 增加点击量 (使用 POST)
 const COUNTBYCLICK = "/count_click";
-export const countUpApi = async (data: {
-  id: string;
-}): Promise<advertisementMeta> => {
+export const countUpApi = async (
+  id: advertisementMeta["id"]
+): Promise<advertisementMeta> => {
   const response = await reuqestPost<ApiResponse<advertisementMeta>>(
     COUNTBYCLICK,
-    data
+    { id }
   );
   return response.data;
 };

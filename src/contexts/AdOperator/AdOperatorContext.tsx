@@ -1,9 +1,14 @@
 import { createContext, useEffect, useState, type ReactNode } from "react";
 import AdOperator from "@/components/AdOperator";
-import Storage from "@/utils/storageHelper";
 import type { advertisementMeta } from "@/types";
 import { Message } from "@arco-design/web-react";
-import { createApi, deleteApi, editApi, getAllAdsApi } from "@/apis";
+import {
+  countUpApi,
+  createApi,
+  deleteApi,
+  editApi,
+  getAllAdsApi,
+} from "@/apis";
 
 interface AdOperatorContextType {
   openAdOperator: (data?: advertisementMeta) => void;
@@ -32,7 +37,6 @@ export const AdOperatorProvider = ({ children }: { children: ReactNode }) => {
     const fetchAds = async () => {
       try {
         const data = await getAllAdsApi();
-        console.log(data);
         setAdvertisementList(data);
       } catch (error) {
         console.error("获取广告列表失败:", error);
@@ -51,27 +55,44 @@ export const AdOperatorProvider = ({ children }: { children: ReactNode }) => {
     setVisible(false);
     setInitialData(undefined);
   };
-  const refreshAdList = () => {
-    setAdvertisementList(Storage.getItem<advertisementMeta[]>("AD-LIST") ?? []);
+  const refreshAdList = async () => {
+    try {
+      const data = await getAllAdsApi();
+      setAdvertisementList(data);
+    } catch (error) {
+      console.error("获取广告列表失败:", error);
+      setAdvertisementList([]);
+    }
   };
 
   const deleteAdFromAdList = async (id: advertisementMeta["id"]) => {
     await deleteApi(id);
-    /*     const existingData = Storage.getItem<advertisementMeta[]>("AD-LIST") ?? [];
-    const updatedData = existingData.filter((item) => item.id !== id);
-    Storage.setItem("AD-LIST", updatedData);
-    refreshAdList(); */
+
     Message.success("删除成功");
+    refreshAdList();
   };
 
-  const clickAdFromAdList = (id: string) => {
-    const existingData = Storage.getItem<advertisementMeta[]>("AD-LIST") ?? [];
-    const index = existingData.findIndex((item) => item.id === id);
+  const clickAdFromAdList = async (id: advertisementMeta["id"]) => {
+    await countUpApi(id);
+    refreshAdList();
+  };
+
+  const handleSubmit = async (data: advertisementMeta) => {
+    const existingData = await getAllAdsApi();
+    const index = existingData.findIndex((item) => item.id === data.id);
     if (index !== -1) {
-      existingData[index].clickCount += 1;
-      Storage.setItem("AD-LIST", existingData);
-      refreshAdList();
+      // 如果存在相同ID的广告，进行更新操作
+      await editApi(data);
+
+      Message.success("更新成功");
+    } else {
+      await createApi(data);
+
+      Message.success("创建成功");
     }
+    refreshAdList();
+
+    closeAdOperator();
   };
 
   return (
@@ -90,34 +111,7 @@ export const AdOperatorProvider = ({ children }: { children: ReactNode }) => {
         visible={visible}
         initialValues={initialData}
         onClose={closeAdOperator}
-        onSubmit={async (data) => {
-          /*     const existingData =
-            Storage.getItem<advertisementMeta[]>("AD-LIST") ?? []; */
-          const existingData = await getAllAdsApi();
-          const index = existingData.findIndex((item) => item.id === data.id);
-          if (index !== -1) {
-            // 如果存在相同ID的广告，进行更新操作
-            await editApi(data);
-            /*   existingData[index] = data;
-            Storage.setItem("AD-LIST", existingData); */
-            Message.success("更新成功");
-          } else {
-            await createApi(data);
-            /*  Storage.setItem("AD-LIST", [...existingData, data]); */
-            Message.success("创建成功");
-          }
-          /*         const Data = Storage.getItem<advertisementMeta[]>("AD-LIST");
-          Data?.sort(
-            (a, b) =>
-              b.price +
-              (b.price + b.clickCount) * 0.44 -
-              (a.price + (a.price + a.clickCount) * 0.44)
-          );
-          Storage.setItem("AD-LIST", Data);
-          // 直接更新状态，不需要事件
-          refreshAdList(); */
-          closeAdOperator();
-        }}
+        onSubmit={handleSubmit}
       />
     </AdOperatorContext.Provider>
   );

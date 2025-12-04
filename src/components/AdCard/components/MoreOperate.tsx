@@ -8,7 +8,7 @@ const MoreOperate = (config: advertisementMeta) => {
   const { openAdOperator, deleteAdFromAdList } = useAdOperator();
   const [deleteModalVisible, setDeleteModalVisible] = useState(false);
 
-  const handleMenuClick = (key: string, e: React.MouseEvent) => {
+  const handleMenuClick = (key: string) => {
     if (key === "1") {
       // 编辑操作
       openAdOperator(config);

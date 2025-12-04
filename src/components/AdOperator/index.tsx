@@ -41,7 +41,8 @@ const AdOperator = ({
     try {
       setLoading(true);
       const values = await form.validate();
-      values.clickCount = initialValues?.clickCount ?? Math.random() * 50;
+      values.clickCount =
+        initialValues?.clickCount ?? Math.floor(Math.random() * 50);
       values.id = initialValues?.id || Date.now().toString();
       console.log(values);
       onSubmit?.(values);
