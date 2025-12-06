@@ -6,7 +6,6 @@ import { Button } from "@arco-design/web-react";
 
 const Home = () => {
   const { openAdOperator, advertisementList } = useAdOperator();
-
   return (
     <div className="p-8">
       <Button type="primary" onClick={() => openAdOperator()}>
