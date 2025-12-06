@@ -14,7 +14,6 @@ export const getAllAdsApi = async (): Promise<advertisementMeta[]> => {
   const response = await requestGet<ApiResponse<advertisementMeta[]>>(
     GET_ALL_ADS
   );
-  console.log(response);
   return response.data;
 };
 
@@ -68,5 +67,20 @@ export const countUpApi = async (
     COUNTBYCLICK,
     { id }
   );
+  return response.data;
+};
+
+//上传视频
+const UPLOAD_FILE = "/upload_file";
+export const uploadFileApi = async (
+  files: File[]
+): Promise<advertisementMeta["videosInfo"]> => {
+  const formData = new FormData();
+  files.forEach((file) => {
+    formData.append("video", file);
+  });
+  const response = await reuqestPost<
+    ApiResponse<advertisementMeta["videosInfo"]>
+  >(UPLOAD_FILE, formData);
   return response.data;
 };
