@@ -84,3 +84,11 @@ export const uploadFileApi = async (
   >(UPLOAD_FILE, formData);
   return response.data;
 };
+
+
+//获取表单配置
+const FORM_CONFIG = "form_config"
+export const getFormConfig = async()=>{
+  const response = await requestGet<ApiResponse<any>>(FORM_CONFIG);
+  return response.data;
+}

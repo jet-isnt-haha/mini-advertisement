@@ -16,6 +16,7 @@ import type {
 } from "@arco-design/web-react/es/Upload";
 
 import { useState, useEffect, useRef } from "react";
+import { useFormConfig } from "./hooks/useFormConfig";
 
 const FormItem = Form.Item;
 const TextArea = Input.TextArea;
@@ -39,7 +40,7 @@ const AdOperator = ({
   const [form] = Form.useForm<AdFormValues>();
   const [loading, setLoading] = useState(false);
   const upLoadRef = useRef<UploadInstance | null>(null);
-
+  const { config } = useFormConfig();
   // 监听 initialValues 变化，更新表单
   useEffect(() => {
     if (visible && initialValues) {
@@ -101,14 +102,54 @@ const AdOperator = ({
     onClose?.();
   };
 
-  return (
-    <Modal
-      visible={visible}
-      title={initialValues ? "编辑广告" : "新建广告"}
-      onCancel={handleCancel}
-      footer={null}
-      style={{ width: 600 }}
-    >
+  const renderComponent = (
+    type: "input" | "text_area" | "upload" | "input_number",
+    props: any
+  ) => {
+    const ComponentByType = {
+      input: <Input {...props} />,
+      text_area: <TextArea {...props} />,
+      upload: <Upload {...props} />,
+      input_number: <InputNumber {...props} />,
+    };
+
+    return ComponentByType[type];
+  };
+
+  const renderFormFromConfig = () => {
+    if (config == undefined) {
+      return undefined;
+    }
+    console.log(config);
+    return (
+      <Form
+        form={form}
+        layout="horizontal"
+        labelAlign="right"
+        requiredSymbol={false}
+      >
+        {config.map((item: any) => {
+          const { name, label, type, rules, component_props } = item;
+          return (
+            <FormItem key={label} field={name} label={label} rules={rules}>
+              {renderComponent(type, component_props)}
+            </FormItem>
+          );
+        })}
+        <FormItem wrapperCol={{ offset: 5 }}>
+          <Space size="large">
+            <Button onClick={handleCancel}>取消</Button>
+            <Button type="primary" loading={loading} onClick={handleSubmit}>
+              提交
+            </Button>
+          </Space>
+        </FormItem>
+      </Form>
+    );
+  };
+
+  const renderDefaultForm = () => {
+    return (
       <Form
         form={form}
         layout="horizontal"
@@ -178,6 +219,18 @@ const AdOperator = ({
           </Space>
         </FormItem>
       </Form>
+    );
+  };
+
+  return (
+    <Modal
+      visible={visible}
+      title={initialValues ? "编辑广告" : "新建广告"}
+      onCancel={handleCancel}
+      footer={null}
+      style={{ width: 600 }}
+    >
+      {renderFormFromConfig() || renderDefaultForm()}
     </Modal>
   );
 };
