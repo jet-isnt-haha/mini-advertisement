@@ -6,7 +6,7 @@ export interface advertisementMeta {
   redirectUrl: string;
   price: number;
   clickCount: number;
-  videosInfo: videoInfoMeta[];
+  videosInfo?: videoInfoMeta[];
 }
 
 export interface videoInfoMeta {

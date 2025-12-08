@@ -1,6 +1,4 @@
-import { uploadFileApi } from "@/apis";
 import type { advertisementMeta } from "@/types";
-import { uploadFileHelper } from "@/utils/uploadFileHelper";
 import {
   Button,
   Form,
@@ -8,21 +6,21 @@ import {
   InputNumber,
   Modal,
   Space,
+  Spin,
   Upload,
 } from "@arco-design/web-react";
-import type {
-  UploadInstance,
-  UploadItem,
-} from "@arco-design/web-react/es/Upload";
+import type { UploadItem } from "@arco-design/web-react/es/Upload";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { useFormConfig } from "./hooks/useFormConfig";
+import { useFormProcessor } from "./hooks/useFormProcessor";
+import DynamicAdForm from "./components/DynamicAdForm";
 
 const FormItem = Form.Item;
 const TextArea = Input.TextArea;
 
 interface AdFormValues extends Omit<advertisementMeta, "videosInfo"> {
-  videosInfo: UploadItem[];
+  videosInfo?: UploadItem[];
 }
 interface AdOperatorProps {
   visible?: boolean;
@@ -37,58 +35,35 @@ const AdOperator = ({
   onSubmit,
   initialValues,
 }: AdOperatorProps) => {
-  const [form] = Form.useForm<AdFormValues>();
+  const [form] = Form.useForm();
   const [loading, setLoading] = useState(false);
-  const upLoadRef = useRef<UploadInstance | null>(null);
-  const { config } = useFormConfig();
+  const { config, loading: configLoading } = useFormConfig();
+  const { processFormData } = useFormProcessor({
+    initialValues,
+    fieldConfig: config || [],
+  });
   // 监听 initialValues 变化，更新表单
   useEffect(() => {
     if (visible && initialValues) {
       const formValues: AdFormValues = {
         ...initialValues,
-        videosInfo: initialValues.videosInfo.map((videoInfo) => ({
-          uid: videoInfo.uid,
-          name: videoInfo.name,
-          status: "done",
-          url: videoInfo.url,
-        })),
       };
       form.setFieldsValue(formValues);
     } else if (visible && !initialValues) {
       form.resetFields();
     }
   }, [visible, initialValues, form]);
-  const washVideoFile = async (files: UploadItem[]) => {
-    const results: advertisementMeta["videosInfo"][] = [];
-
-    for (const file of files) {
-      if (file.originFile) {
-        //新上传文件批处理
-        const result = await uploadFileHelper(file.originFile, uploadFileApi);
-        if (result) results.push(result);
-      } else if (file.url && file.uid && file.name) {
-        const videoInfo = { url: file.url, name: file.name, uid: file.uid };
-        results.push([videoInfo]);
-      }
-    }
-
-    return results.flat();
-  };
 
   const handleSubmit = async () => {
     try {
       setLoading(true);
       const values = await form.validate();
-      const videosInfo = await washVideoFile(values.videosInfo);
-      const submitData: advertisementMeta = {
-        ...values,
-        clickCount: initialValues?.clickCount ?? Math.floor(Math.random() * 50),
-        id: initialValues?.id || Date.now().toString(),
-        videosInfo,
-      };
-      console.log("submit ", submitData);
+
+      const processedData = await processFormData(values);
+
+      console.log("submit ", processedData);
       //将AdFormValues类型转变为元数据类型
-      onSubmit?.(submitData);
+      onSubmit?.(processedData);
       form.resetFields();
     } catch (error) {
       console.error("表单验证失败:", error);
@@ -100,52 +75,6 @@ const AdOperator = ({
   const handleCancel = () => {
     form.resetFields();
     onClose?.();
-  };
-
-  const renderComponent = (
-    type: "input" | "text_area" | "upload" | "input_number",
-    props: any
-  ) => {
-    const ComponentByType = {
-      input: <Input {...props} />,
-      text_area: <TextArea {...props} />,
-      upload: <Upload {...props} />,
-      input_number: <InputNumber {...props} />,
-    };
-
-    return ComponentByType[type];
-  };
-
-  const renderFormFromConfig = () => {
-    if (config == undefined) {
-      return undefined;
-    }
-    console.log(config);
-    return (
-      <Form
-        form={form}
-        layout="horizontal"
-        labelAlign="right"
-        requiredSymbol={false}
-      >
-        {config.map((item: any) => {
-          const { name, label, type, rules, component_props } = item;
-          return (
-            <FormItem key={label} field={name} label={label} rules={rules}>
-              {renderComponent(type, component_props)}
-            </FormItem>
-          );
-        })}
-        <FormItem wrapperCol={{ offset: 5 }}>
-          <Space size="large">
-            <Button onClick={handleCancel}>取消</Button>
-            <Button type="primary" loading={loading} onClick={handleSubmit}>
-              提交
-            </Button>
-          </Space>
-        </FormItem>
-      </Form>
-    );
   };
 
   const renderDefaultForm = () => {
@@ -184,7 +113,6 @@ const AdOperator = ({
           rules={[{ required: true, message: "请上传视频" }]}
         >
           <Upload
-            ref={upLoadRef}
             listType="picture-card"
             multiple
             name="video"
@@ -222,6 +150,29 @@ const AdOperator = ({
     );
   };
 
+  const renderForm = () => {
+    if (configLoading) {
+      return (
+        <div style={{ textAlign: "center", padding: "50px 0" }}>
+          <Spin tip="加载表单配置中..." />
+        </div>
+      );
+    }
+    if (config && config.length > 0) {
+      return (
+        <DynamicAdForm
+          fieldConfigs={config}
+          form={form}
+          loading={loading}
+          onCancel={handleCancel}
+          onSubmit={handleSubmit}
+        />
+      );
+    }
+
+    return renderDefaultForm();
+  };
+
   return (
     <Modal
       visible={visible}
@@ -230,7 +181,7 @@ const AdOperator = ({
       footer={null}
       style={{ width: 600 }}
     >
-      {renderFormFromConfig() || renderDefaultForm()}
+      {renderForm()}
     </Modal>
   );
 };

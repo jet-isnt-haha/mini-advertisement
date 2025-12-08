@@ -9,11 +9,12 @@ import {
   editApi,
   getAllAdsApi,
 } from "@/apis";
+import { processAdList, type AdWithClick } from "@/utils/adListHelper";
 
 interface AdOperatorContextType {
   openAdOperator: (data?: advertisementMeta) => void;
   closeAdOperator: () => void;
-  advertisementList: advertisementMeta[];
+  adList: AdWithClick[];
   refreshAdList: () => void;
   deleteAdFromAdList: (id: string) => void;
   clickAdFromAdList: (id: string) => void;
@@ -29,18 +30,16 @@ export const AdOperatorProvider = ({ children }: { children: ReactNode }) => {
     undefined
   );
 
-  const [advertisementList, setAdvertisementList] = useState<
-    advertisementMeta[]
-  >([]);
+  const [adList, setAdList] = useState<AdWithClick[]>([]);
 
   useEffect(() => {
     const fetchAds = async () => {
       try {
-        const data = await getAllAdsApi();
-        setAdvertisementList(data);
+        const rawAds = await getAllAdsApi();
+        const processedAds = processAdList(rawAds);
+        setAdList(processedAds);
       } catch (error) {
         console.error("获取广告列表失败:", error);
-        setAdvertisementList([]);
       }
     };
     fetchAds();
@@ -57,11 +56,11 @@ export const AdOperatorProvider = ({ children }: { children: ReactNode }) => {
   };
   const refreshAdList = async () => {
     try {
-      const data = await getAllAdsApi();
-      setAdvertisementList(data);
+      const rawAds = await getAllAdsApi();
+      const processedAds = processAdList(rawAds);
+      setAdList(processedAds);
     } catch (error) {
       console.error("获取广告列表失败:", error);
-      setAdvertisementList([]);
     }
   };
 
@@ -100,7 +99,7 @@ export const AdOperatorProvider = ({ children }: { children: ReactNode }) => {
       value={{
         openAdOperator,
         closeAdOperator,
-        advertisementList,
+        adList,
         refreshAdList,
         deleteAdFromAdList,
         clickAdFromAdList,
