@@ -4,11 +4,19 @@ import axios, {
   type InternalAxiosRequestConfig,
 } from "axios";
 
-const request: AxiosInstance = axios.create({
-  baseURL: "/v1/api",
-  timeout: 10000,
-});
+export const API_BASE_URL =
+  import.meta.env.VITE_API_BASE_URL || "http://localhost:3000";
 
+export const API_ENDPOINTS = {
+  ads: `${API_BASE_URL}/v1/api/ads`,
+  upload: `${API_BASE_URL}/v1/api/upload`,
+};
+
+const request: AxiosInstance = axios.create({
+  baseURL: `${API_BASE_URL}/v1/api/`,
+  timeout: 10000,
+  withCredentials: true,
+});
 request.interceptors.request.use((config: InternalAxiosRequestConfig) => {
   return config;
 });
