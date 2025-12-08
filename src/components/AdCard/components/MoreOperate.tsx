@@ -2,9 +2,9 @@ import { Button, Dropdown, Menu } from "@arco-design/web-react";
 import { useState } from "react";
 import DeleteModal from "./DeleteModal";
 import { useAdOperator } from "@/contexts/AdOperator/useAdOperator";
-import type { advertisementMeta } from "@/types";
+import type { AdvertisementMeta } from "@/types";
 
-const MoreOperate = (config: advertisementMeta) => {
+const MoreOperate = (config: AdvertisementMeta) => {
   const { openAdOperator, deleteAdFromAdList } = useAdOperator();
   const [deleteModalVisible, setDeleteModalVisible] = useState(false);
 
