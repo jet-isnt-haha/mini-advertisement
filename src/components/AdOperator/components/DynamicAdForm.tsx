@@ -9,6 +9,7 @@ import {
   Upload,
   type FormInstance,
 } from "@arco-design/web-react";
+import type { AdFormValues } from "../type";
 
 const FormItem = Form.Item;
 const TextArea = Input.TextArea;
@@ -22,7 +23,7 @@ const ComponentByType: Record<FieldType, React.FC> = {
 
 interface DynamicFormProps {
   fieldConfigs: FieldConfig[];
-  form: FormInstance;
+  form: FormInstance<AdFormValues>;
   loading?: boolean;
   onSubmit: () => void;
   onCancel: () => void;
@@ -38,7 +39,8 @@ const DynamicAdForm = ({
   const renderField = (field: FieldConfig) => {
     const { type, component_props = {} } = field;
     const Component = ComponentByType[type] || Input;
-    return <Component {...component_props} />;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    return <Component {...(component_props as any)} />;
   };
 
   return (
@@ -54,6 +56,7 @@ const DynamicAdForm = ({
           field={field.name}
           label={field.label}
           rules={field.rules}
+          {...field.item_props}
         >
           {renderField(field)}
         </FormItem>

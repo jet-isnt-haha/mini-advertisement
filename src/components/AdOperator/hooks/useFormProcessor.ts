@@ -1,14 +1,15 @@
-import type { advertisementMeta } from "@/types";
+import type { AdvertisementMeta } from "@/types";
 import type { FieldConfig } from "@/types/form";
 import { useMemo } from "react";
 import {
   createDefaultProcessor,
-  createPipeline,
   ProcessorMap,
-} from "../utils/formHandler";
+} from "../utils/adProcessors";
+import { createPipeline } from "@/utils/processorHelper";
+import type { AdFormValues } from "../type";
 
 interface Options {
-  initialValues: advertisementMeta | undefined;
+  initialValues: AdvertisementMeta | undefined;
   fieldConfig: FieldConfig[];
 }
 
@@ -30,16 +31,15 @@ export const useFormProcessor = ({ initialValues, fieldConfig }: Options) => {
         processors.push(processor);
       }
     }
-
-    return createPipeline(...processors, defaultProcessor);
+    return createPipeline<Partial<AdFormValues>, FieldConfig[]>(...processors, defaultProcessor);
   }, [fieldConfig, initialValues]);
 
-  const processFormData = async (values) => {
+  const processFormData = async (values: Partial<AdFormValues>) => {
     if (!formProcessor) {
-      return values;
+      return values as AdvertisementMeta;
     }
 
-    return await formProcessor(values, fieldConfig);
+    return await formProcessor(values, fieldConfig) as AdvertisementMeta;
   };
 
   return { processFormData };

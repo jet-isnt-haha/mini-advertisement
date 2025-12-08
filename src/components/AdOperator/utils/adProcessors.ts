@@ -1,16 +1,16 @@
 import { uploadFileApi } from "@/apis";
-import type { advertisementMeta } from "@/types";
+import type { AdvertisementMeta } from "@/types";
 import type { FieldConfig, FieldType } from "@/types/form";
+import type { Processor } from "@/utils/processorHelper";
 import { uploadFileHelper } from "@/utils/uploadFileHelper";
 import type { UploadItem } from "@arco-design/web-react/es/Upload";
+import type { AdFormValues } from "../type";
 
 //数据处理器接收数据返回处理后的数据
-export type Processor = (
-  values: Record<string, any>,
-  config: FieldConfig[]
-) => Record<string, any> | Promise<Record<string, any>>;
+export type AdFormProcessor = Processor<Partial<AdFormValues&Record<string, unknown>>, FieldConfig[]>;
 
-export const uploadProcessor: Processor = async (values, config) => {
+export const uploadProcessor: AdFormProcessor = async (values, config) => {
+  if(config===undefined) return values;
   const result = { ...values };
 
   const uploadFields = config.filter((field) => field.type === "upload");
@@ -25,8 +25,8 @@ export const uploadProcessor: Processor = async (values, config) => {
 };
 
 export const createDefaultProcessor = (
-  initialValues?: Record<string, any>
-): Processor => {
+  initialValues?: AdvertisementMeta
+): AdFormProcessor => {
   return (value) => {
     return {
       ...value,
@@ -36,18 +36,8 @@ export const createDefaultProcessor = (
   };
 };
 
-export const createPipeline = (...processors: Processor[]): Processor => {
-  return async (values, config) => {
-    const adData = processors.reduce(
-      async (result, processor) => await processor(result, config),
-      values
-    );
-    return adData;
-  };
-};
-
 const washVideoFile = async (files: UploadItem[]) => {
-  const results: advertisementMeta["videosInfo"][] = [];
+  const results: AdvertisementMeta["videosInfo"][] = [];
 
   for (const file of files) {
     if (file.originFile) {
@@ -63,7 +53,7 @@ const washVideoFile = async (files: UploadItem[]) => {
   return results.flat();
 };
 
-export const ProcessorMap: Record<FieldType, Processor | null> = {
+export const ProcessorMap: Record<FieldType, AdFormProcessor | null> = {
   upload: uploadProcessor,
   input: null,
   text_area: null,
