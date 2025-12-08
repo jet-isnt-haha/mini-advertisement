@@ -8,7 +8,7 @@ import type { UploadProps } from "@arco-design/web-react/es/Upload/interface";
 export interface FieldRule {
   required?: boolean;
   message?: string;
-  pattern?: RegExp;
+  match?: RegExp;
   min?: number;
   max?: number;
 }

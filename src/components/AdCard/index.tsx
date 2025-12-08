@@ -2,7 +2,7 @@
 import { Card } from "@arco-design/web-react";
 import MoreOperate from "./components/MoreOperate";
 import CardContent from "./components/CardContent";
-import { useVideoModal } from "../../hooks/useVideoModal";
+import { useVideoModal } from "../VideoPlayer/hooks/useVideoModal";
 import type { AdvertisementMeta } from "@/types";
 import { useAdClickFlow } from "@/hooks/useAdClickFlow";
 
