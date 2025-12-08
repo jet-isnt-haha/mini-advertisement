@@ -2,19 +2,16 @@
 import { Card } from "@arco-design/web-react";
 import MoreOperate from "./components/MoreOperate";
 import CardContent from "./components/CardContent";
-import { useMemo } from "react";
-import { useVideoModal } from "./hooks/useVideoModal";
-import { buildAdClickFlow, type AdWithClick } from "@/utils/adListHelper";
+import { useVideoModal } from "../../hooks/useVideoModal";
+import type { AdvertisementMeta } from "@/types";
+import { useAdClickFlow } from "@/hooks/useAdClickFlow";
 
-const AdCard = (config: AdWithClick) => {
+const AdCard = (config: AdvertisementMeta) => {
   const { content, title, publisher, price, clickCount } = config;
 
   const { openVideoModal, contextHolder } = useVideoModal();
 
-  const handleCardClick = useMemo(
-    () => buildAdClickFlow(config, { openVideoModal }),
-    [config, openVideoModal]
-  );
+  const handleCardClick = useAdClickFlow(config, { openVideoModal });
 
   return (
     <>
