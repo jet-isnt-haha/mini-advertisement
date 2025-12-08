@@ -1,4 +1,4 @@
-import type { advertisementMeta } from "@/types";
+import type { AdvertisementMeta } from "@/types";
 import {
   Button,
   Form,
@@ -9,24 +9,21 @@ import {
   Spin,
   Upload,
 } from "@arco-design/web-react";
-import type { UploadItem } from "@arco-design/web-react/es/Upload";
 
 import { useState, useEffect } from "react";
 import { useFormConfig } from "./hooks/useFormConfig";
 import { useFormProcessor } from "./hooks/useFormProcessor";
 import DynamicAdForm from "./components/DynamicAdForm";
+import type { AdFormValues } from "./type";
 
 const FormItem = Form.Item;
 const TextArea = Input.TextArea;
 
-interface AdFormValues extends Omit<advertisementMeta, "videosInfo"> {
-  videosInfo?: UploadItem[];
-}
 interface AdOperatorProps {
   visible?: boolean;
   onClose?: () => void;
-  onSubmit?: (data: advertisementMeta) => void;
-  initialValues?: advertisementMeta;
+  onSubmit?: (data: AdvertisementMeta) => void;
+  initialValues?: AdvertisementMeta;
 }
 
 const AdOperator = ({
@@ -35,7 +32,7 @@ const AdOperator = ({
   onSubmit,
   initialValues,
 }: AdOperatorProps) => {
-  const [form] = Form.useForm();
+  const [form] = Form.useForm<AdFormValues>();
   const [loading, setLoading] = useState(false);
   const { config, loading: configLoading } = useFormConfig();
   const { processFormData } = useFormProcessor({
@@ -47,6 +44,12 @@ const AdOperator = ({
     if (visible && initialValues) {
       const formValues: AdFormValues = {
         ...initialValues,
+        videosInfo: initialValues.videosInfo?.map((item) => ({
+          url: item.url,
+          name: item.name,
+          status: "done",
+          uid: item.uid,
+        })),
       };
       form.setFieldsValue(formValues);
     } else if (visible && !initialValues) {
@@ -58,7 +61,6 @@ const AdOperator = ({
     try {
       setLoading(true);
       const values = await form.validate();
-
       const processedData = await processFormData(values);
 
       console.log("submit ", processedData);

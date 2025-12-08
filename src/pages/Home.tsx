@@ -1,6 +1,6 @@
 import AdCard from "@/components/AdCard";
 import { useAdOperator } from "@/contexts/AdOperator/useAdOperator";
-import type { AdWithClick } from "@/utils/adListHelper";
+import type { AdvertisementMeta } from "@/types";
 
 import { Button } from "@arco-design/web-react";
 
@@ -12,7 +12,7 @@ const Home = () => {
         新增广告
       </Button>
       <div className=" space-x-4 flex flex-row flex-wrap mt-8 gap-y-8">
-        {adList.map((ad: AdWithClick) => (
+        {adList.map((ad: AdvertisementMeta) => (
           <AdCard key={ad.id} {...ad} />
         ))}
       </div>
