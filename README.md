@@ -19,9 +19,13 @@
 
 Mini-Advertisement 是一个前后端分离的广告管理系统，用户点击广告后会先观看视频，随后跳转到落地页并统计点击量。系统采用动态表单配置，支持后端控制前端表单结构，具备高度的可扩展性。
 
-FE:https://github.com/jet-isnt-haha/mini-advertisement
+FE仓库:https://github.com/jet-isnt-haha/mini-advertisement
 
-BE:https://github.com/jet-isnt-haha/mini-advertisement-BE
+FE可访问域名:[mini-advertisement.vercel.app](https://mini-advertisement.vercel.app/)
+
+BE仓库:https://github.com/jet-isnt-haha/mini-advertisement-BE
+
+BE可访问域名:[mini-advertisement-be.onrender](https://mini-advertisement-be.onrender.com)
 
 开发文档: [开发文档](./docs/DEVELOPMENT.md)
 
@@ -303,29 +307,148 @@ User Action → Component → Context → API → Backend → Database
 
 ## 📝 API 文档
 
-### 广告相关
+## 📝 API 接口文档
 
-| 接口                 | 方法   | 说明         |
-| -------------------- | ------ | ------------ |
-| `/api/ads`           | GET    | 获取所有广告 |
-| `/api/ads`           | POST   | 创建广告     |
-| `/api/ads/:id`       | PUT    | 更新广告     |
-| `/api/ads/:id`       | DELETE | 删除广告     |
-| `/api/ads/:id/click` | POST   | 统计点击量   |
+**Base URL**: `/v1/api`
 
-### 文件上传
+**统一响应格式**:
+```json
+{
+  "code": 0,
+  "data": {},
+  "message": "success"
+}
+```
 
-| 接口                | 方法 | 说明       |
-| ------------------- | ---- | ---------- |
-| `/api/upload`       | POST | 单文件上传 |
-| `/api/upload/batch` | POST | 批量上传   |
+---
 
-### 配置获取
+### 广告管理接口
 
-| 接口               | 方法 | 说明         |
-| ------------------ | ---- | ------------ |
-| `/api/config/form` | GET  | 获取表单配置 |
+| 接口路径            | 请求方法 | 接口说明     | 请求参数类型          | 请求参数示例                                      | 响应数据类型            |
+| ------------------- | -------- | ------------ | --------------------- | ------------------------------------------------- | ----------------------- |
+| `/ads`              | `GET`    | 获取所有广告 | 无                    | -                                                 | `AdvertisementMeta[]`   |
+| `/create_ad`        | `POST`   | 创建广告     | `AdvertisementMeta`   | `{ title, publisher, content, ... }`              | `AdvertisementMeta`     |
+| `/edit_ad`          | `POST`   | 编辑广告     | `AdvertisementMeta`   | `{ id, title, publisher, content, ... }`          | `AdvertisementMeta`     |
+| `/delete_ad`        | `POST`   | 删除广告     | `{ id: string }`      | `{ "id": "123456" }`                              | `-`                     |
+| `/advertise/:id`    | `GET`    | 获取单个广告 | 路径参数              | `/advertise/123456`                               | `AdvertisementMeta`     |
+| `/count_click`      | `POST`   | 统计点击量   | `{ id: string }`      | `{ "id": "123456" }`                              | `AdvertisementMeta`     |
 
+---
+
+### 文件上传接口
+
+| 接口路径       | 请求方法 | 接口说明     | 请求参数类型           | 请求参数示例          | 响应数据类型  |
+| -------------- | -------- | ------------ | ---------------------- | --------------------- | ------------- |
+| `/upload_file` | `POST`   | 批量上传视频 | `FormData` (多文件)    | `video: File[]`       | `videosInfo[]`|
+
+**请求示例**:
+```typescript
+const formData = new FormData();
+formData.append('video', file1);
+formData.append('video', file2);
+```
+
+---
+
+### 配置接口
+
+| 接口路径      | 请求方法 | 接口说明       | 请求参数类型 | 响应数据类型       |
+| ------------- | -------- | -------------- | ------------ | ------------------ |
+| `/form_config`| `GET`    | 获取表单配置   | 无           | `FormFieldConfig[]`|
+
+---
+
+### 数据类型定义
+
+**AdvertisementMeta**:
+```typescript
+interface AdvertisementMeta {
+  id: string;                    // 广告唯一标识
+  title: string;                 // 广告标题
+  publisher: string;             // 发布人
+  content: string;               // 内容文案
+  redirectUrl: string;           // 落地页链接
+  price: number;                 // 出价（元）
+  clickCount: number;            // 点击次数
+  videosInfo?: VideoInfo[];      // 视频信息数组
+}
+```
+
+**VideoInfo**:
+```typescript
+interface VideoInfo {
+  url: string;      // 视频访问地址
+  name: string;     // 文件名
+  uid: string;      // 唯一标识
+}
+```
+
+**FormFieldConfig**:
+```typescript
+interface FormFieldConfig {
+  name: string;                  // 字段名
+  label: string;                 // 字段标签
+  type: string;                  // 字段类型（input/textarea/upload/number）
+  rules?: Array<{                // 验证规则
+    required?: boolean;
+    message?: string;
+  }>;
+  component_props?: object;      // 组件额外属性
+}
+```
+
+---
+
+### 错误码说明
+
+| 错误码 | 说明           | 处理建议               |
+| ------ | -------------- | ---------------------- |
+| `0`    | 请求成功       | -                      |
+| `400`  | 参数错误       | 检查请求参数格式       |
+| `404`  | 资源不存在     | 检查广告 ID 是否正确   |
+| `500`  | 服务器内部错误 | 联系技术支持           |
+
+---
+
+### 请求示例
+
+**创建广告**:
+```bash
+curl -X POST http://localhost:3000/v1/api/create_ad \
+  -H "Content-Type: application/json" \
+  -d '{
+    "title": "新广告",
+    "publisher": "张三",
+    "content": "这是广告内容",
+    "redirectUrl": "https://example.com",
+    "price": 100,
+    "videosInfo": [
+      {
+        "url": "https://example.com/video.mp4",
+        "name": "video.mp4",
+        "uid": "uid123"
+      }
+    ]
+  }'
+```
+
+**响应示例**:
+```json
+{
+  "code": 0,
+  "data": {
+    "id": "1234567890",
+    "title": "新广告",
+    "publisher": "张三",
+    "content": "这是广告内容",
+    "redirectUrl": "https://example.com",
+    "price": 100,
+    "clickCount": 0,
+    "videosInfo": [...]
+  },
+  "message": "创建成功"
+}
+```
 ---
 
 ## 🔧 配置说明
