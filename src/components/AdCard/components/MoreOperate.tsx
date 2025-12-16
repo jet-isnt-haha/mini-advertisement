@@ -14,7 +14,11 @@ const MoreOperate = (config: AdvertisementMeta) => {
       openAdOperator(config);
     } else if (key === "2") {
       // 复制操作
-      openAdOperator({ ...config, id: Date.now().toString() });
+      openAdOperator({
+        ...config,
+        id: Date.now().toString(),
+        sourceId: config.id,
+      });
     } else if (key === "3") {
       // 删除操作
       setDeleteModalVisible(true);
@@ -32,7 +36,6 @@ const MoreOperate = (config: AdvertisementMeta) => {
   return (
     <div onClick={(e) => e.stopPropagation()}>
       <Dropdown droplist={OperateList} position="bl" trigger="click">
-        {/* 这个按钮上的 stopPropagation 现在可以移除了，因为父 div 会处理 */}
         <Button shape="round" type="primary">
           操作
         </Button>

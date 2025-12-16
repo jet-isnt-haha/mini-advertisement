@@ -9,14 +9,15 @@ import {
   editApi,
   getAllAdsApi,
 } from "@/apis";
+import { removeFormConfig } from "@/utils/cacheHelper";
 
 interface AdOperatorContextType {
   openAdOperator: (data?: AdvertisementMeta) => void;
   closeAdOperator: () => void;
   adList: AdvertisementMeta[];
   refreshAdList: () => void;
-  deleteAdFromAdList: (id: string) => void;
-  clickAdFromAdList: (id: string) => void;
+  deleteAdFromAdList: (id: AdvertisementMeta["id"]) => void;
+  clickAdFromAdList: (id: AdvertisementMeta["id"]) => void;
 }
 
 const AdOperatorContext = createContext<AdOperatorContextType | undefined>(
@@ -63,9 +64,9 @@ export const AdOperatorProvider = ({ children }: { children: ReactNode }) => {
 
   const deleteAdFromAdList = async (id: AdvertisementMeta["id"]) => {
     await deleteApi(id);
-
     Message.success("删除成功");
     refreshAdList();
+    removeFormConfig(id);
   };
 
   const clickAdFromAdList = async (id: AdvertisementMeta["id"]) => {

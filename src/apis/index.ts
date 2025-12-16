@@ -1,5 +1,5 @@
 import { requestGet, reuqestPost } from "@/utils/requestHelper";
-import type { AdvertisementMeta } from "@/types";
+import type { AdvertisementMeta, FieldConfig } from "@/types";
 
 // 定义通用的 API 响应结构
 interface ApiResponse<T> {
@@ -32,7 +32,7 @@ export const createApi = async (
 // 编辑广告
 const EDIT_AD = "/edit_ad";
 export const editApi = async (
-      data: AdvertisementMeta
+  data: AdvertisementMeta
 ): Promise<AdvertisementMeta> => {
   const response = await reuqestPost<ApiResponse<AdvertisementMeta>>(
     EDIT_AD,
@@ -85,11 +85,10 @@ export const uploadFileApi = async (
   return response.data;
 };
 
-
 //获取表单配置
-const FORM_CONFIG = "form_config"
-export const getFormConfig = async()=>{
+const FORM_CONFIG = "form_config";
+export const getFormConfig = async () => {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const response = await requestGet<ApiResponse<any>>(FORM_CONFIG);
+  const response = await requestGet<ApiResponse<FieldConfig[]>>(FORM_CONFIG);
   return response.data;
-}
+};

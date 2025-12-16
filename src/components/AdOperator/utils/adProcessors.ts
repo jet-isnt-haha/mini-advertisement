@@ -5,12 +5,16 @@ import type { Processor } from "@/utils/processorHelper";
 import { uploadFileHelper } from "@/utils/uploadFileHelper";
 import type { UploadItem } from "@arco-design/web-react/es/Upload";
 import type { AdFormValues } from "../type";
+import Storage from "@/utils/storageHelper";
 
 //数据处理器接收数据返回处理后的数据
-export type AdFormProcessor = Processor<Partial<AdFormValues&Record<string, unknown>>, FieldConfig[]>;
+export type AdFormProcessor = Processor<
+  Partial<AdFormValues & Record<string, unknown>>,
+  FieldConfig[]
+>;
 
 export const uploadProcessor: AdFormProcessor = async (values, config) => {
-  if(config===undefined) return values;
+  if (config === undefined) return values;
   const result = { ...values };
 
   const uploadFields = config.filter((field) => field.type === "upload");
@@ -27,10 +31,14 @@ export const uploadProcessor: AdFormProcessor = async (values, config) => {
 export const createDefaultProcessor = (
   initialValues?: AdvertisementMeta
 ): AdFormProcessor => {
+  //对于复制的情况,从localStorage获取新id
+  const newId = Storage.getItem<string>("tmp_new_id");
+  Storage.removeItem("tmp_new_id");
   return (value) => {
     return {
       ...value,
-      id: initialValues?.id || Date.now().toString(),
+      sourceId: initialValues?.id,
+      id: newId || initialValues?.id || Date.now().toString(),
       clickCount: initialValues?.clickCount || 0,
     };
   };

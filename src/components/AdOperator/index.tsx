@@ -15,6 +15,8 @@ import { useFormConfig } from "./hooks/useFormConfig";
 import { useFormProcessor } from "./hooks/useFormProcessor";
 import DynamicAdForm from "./components/DynamicAdForm";
 import type { AdFormValues } from "./type";
+import { cacheFormConfig } from "@/utils/cacheHelper";
+import { defaultFormConfig } from "@/constants";
 
 const FormItem = Form.Item;
 const TextArea = Input.TextArea;
@@ -30,11 +32,16 @@ const AdOperator = ({
   visible = true,
   onClose,
   onSubmit,
-  initialValues,
+  initialValues = undefined,
 }: AdOperatorProps) => {
   const [form] = Form.useForm<AdFormValues>();
   const [loading, setLoading] = useState(false);
-  const { config, loading: configLoading } = useFormConfig();
+  const {
+    config,
+    rawConfig,
+    loading: configLoading,
+  } = useFormConfig({ initialValues });
+  // console.log("real-configs ", config);
   const { processFormData } = useFormProcessor({
     initialValues,
     fieldConfig: config || [],
@@ -66,6 +73,7 @@ const AdOperator = ({
       console.log("submit ", processedData);
       //将AdFormValues类型转变为元数据类型
       onSubmit?.(processedData);
+      cacheFormConfig(processedData.id, rawConfig ?? defaultFormConfig);
       form.resetFields();
     } catch (error) {
       console.error("表单验证失败:", error);

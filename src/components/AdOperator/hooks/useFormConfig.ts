@@ -1,6 +1,11 @@
 import { getFormConfig } from "@/apis";
-import type { FieldConfig } from "@/types";
+import type { AdvertisementMeta, FieldConfig } from "@/types";
+import { getCachedFormConfig } from "@/utils/cacheHelper";
 import { useRequest } from "ahooks";
+
+interface useFormConfigOptions {
+  initialValues: AdvertisementMeta | undefined;
+}
 
 const parseRegexString = (regexStr: string): RegExp | null => {
   try {
@@ -22,7 +27,7 @@ const processRules = (config: FieldConfig[]): FieldConfig[] => {
 
     const processedRules = field.rules.map((rule) => {
       // 检查 rule.match 是否为字符串
-      if (rule.match && typeof rule.match === 'string') {
+      if (rule.match && typeof rule.match === "string") {
         const regex = parseRegexString(rule.match);
         if (regex) {
           return {
@@ -37,16 +42,32 @@ const processRules = (config: FieldConfig[]): FieldConfig[] => {
     return { ...field, rules: processedRules };
   });
 };
-export const useFormConfig = () => {
-  const { data: config = undefined, loading } = useRequest(async () => {
-    const config = await getFormConfig();
-    return processRules(config.fields);
-  });
+
+export const useFormConfig = (options: useFormConfigOptions) => {
+  const { initialValues } = options;
+  const { data: config = undefined, loading } = useRequest(
+    async () => {
+      const rawConfig = initialValues
+        ? getCachedFormConfig(initialValues.sourceId || initialValues.id)
+        : await getFormConfig();
+      return {
+        rawConfig,
+        processedConfig: processRules(rawConfig),
+      };
+    },
+    {
+      refreshDeps: [initialValues?.id],
+      cacheKey: initialValues?.id
+        ? `form-config-${initialValues.id}`
+        : "form-config-new",
+    }
+  );
   if (config == undefined) {
     return { config: undefined };
   }
   return {
-    config,
+    config: config.processedConfig,
+    rawConfig: config.rawConfig,
     loading,
   };
 };

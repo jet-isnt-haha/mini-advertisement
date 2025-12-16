@@ -1,11 +1,14 @@
 import type { FIELD_TYPE } from "@/constants";
 import type { FormItemProps } from "@arco-design/web-react/es/Form/interface";
-import type { InputProps, TextAreaProps } from "@arco-design/web-react/es/Input/interface";
+import type {
+  InputProps,
+  TextAreaProps,
+} from "@arco-design/web-react/es/Input/interface";
 import type { InputNumberProps } from "@arco-design/web-react/es/InputNumber/interface";
 import type { UploadProps } from "@arco-design/web-react/es/Upload/interface";
 
-
 export interface FieldRule {
+  type?: string;
   required?: boolean;
   message?: string;
   match?: RegExp;
@@ -36,11 +39,15 @@ export interface UploadFieldConfig extends BaseFieldConfig {
   component_props?: UploadProps;
 }
 
-export interface InputNumberFieldConfig extends BaseFieldConfig { 
+export interface InputNumberFieldConfig extends BaseFieldConfig {
   type: FIELD_TYPE.INPUT_NUMBER;
   component_props?: InputNumberProps;
 }
 
-export type FieldConfig = InputFieldConfig | TextAreaFieldConfig | UploadFieldConfig | InputNumberFieldConfig;
+export type FieldConfig =
+  | InputFieldConfig
+  | TextAreaFieldConfig
+  | UploadFieldConfig
+  | InputNumberFieldConfig;
 
 export type FieldType = FieldConfig["type"];
