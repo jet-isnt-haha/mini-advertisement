@@ -8,6 +8,7 @@
 - [4. 复杂逻辑实现](#4-复杂逻辑实现)
 - [5. 数据流设计](#5-数据流设计)
 - [6. 核心功能模块](#6-核心功能模块)
+- [7. 历史表单配置缓存系统](#7-历史表单配置缓存系统)
 
 ---
 
@@ -785,14 +786,253 @@ const VideoPlayer = ({ videoResource, onEnded }) => {
 
 ---
 
-## 7. 总结
+## 7. 历史表单配置缓存系统
 
-### 7.1 技术亮点
+### 7.1 问题背景
+
+#### 7.1.1 核心问题
+
+当后端修改表单配置后，已创建的广告可能包含**新配置中不存在的字段**，导致：
+
+- ❌ 编辑旧广告时，旧字段无法显示
+- ❌ 保存后，旧字段数据丢失
+- ❌ 用户体验受损
+
+**示例场景**：
+
+```typescript
+// 旧配置（创建广告时）
+fields: [
+  { name: "title", type: "input" },
+  { name: "description", type: "textarea" }, // 已被删除
+  { name: "videosInfo", type: "upload" },
+];
+
+// 新配置（当前配置）
+fields: [
+  { name: "title", type: "input" },
+  { name: "videosInfo", type: "upload" },
+];
+
+// 问题：编辑旧广告时，"description" 字段无法显示和编辑
+```
+
+### 7.2 解决方案
+
+#### 7.2.1 设计思路
+
+1. **创建广告时**：缓存当前表单配置
+2. **编辑广告时**：优先使用缓存的配置
+3. **复制广告时**：优先使用被复制的广告表单配置
+4. **删除广告时**：清理对应的配置缓存
+
+#### 7.2.2 核心实现
+
+**数据结构**（`cacheHelper.ts`）：
+
+```typescript
+interface FormConfig {
+  id: string; // 配置哈希（MD5）
+  config: FieldConfig[]; // 完整的表单配置
+  refCount: number; // 引用计数
+  formIds: string[]; // 使用该配置的表单ID列表
+  createAt: number; // 创建时间
+  updateAt: number; // 更新时间
+}
+
+interface FormConfigCache {
+  configs: Record<string, FormConfig>; // 配置哈希 → 配置对象
+  formMapping: Record<string, string>; // 表单ID → 配置哈希
+}
+```
+
+**核心 API**：
+
+```typescript
+// 1. 生成配置哈希（用于去重）
+const generateConfigHash = (config: FieldConfig[]): string => {
+  return CryptoJS.MD5(JSON.stringify(config)).toString();
+};
+
+// 2. 缓存表单配置
+export const cacheFormConfig = (formId: string, config: FieldConfig[]) => {
+  const storage = getStorage();
+  const configHash = generateConfigHash(config);
+
+  if (storage.formMapping[formId]) return; // 已存在，直接返回
+
+  if (storage.configs[configHash]) {
+    // 已有相同配置，增加引用计数
+    storage.configs[configHash].refCount += 1;
+    storage.configs[configHash].formIds.push(formId);
+    storage.configs[configHash].updateAt = Date.now();
+  } else {
+    // 新配置，创建记录
+    storage.configs[configHash] = {
+      id: configHash,
+      config,
+      refCount: 1,
+      formIds: [formId],
+      createAt: Date.now(),
+      updateAt: Date.now(),
+    };
+  }
+
+  storage.formMapping[formId] = configHash;
+  saveStorage(storage);
+};
+
+// 3. 获取缓存的配置
+export const getCachedFormConfig = (formId: string): FieldConfig[] => {
+  const storage = getStorage();
+  const configHash = storage.formMapping[formId];
+  return configHash ? storage.configs[configHash].config : [];
+};
+
+// 4. 删除配置缓存（引用计数 -1）
+export const removeFormConfig = (formId: string) => {
+  const storage = getStorage();
+  const configHash = storage.formMapping[formId];
+  if (!configHash || !storage.configs[configHash]) return;
+
+  const config = storage.configs[configHash];
+  config.refCount -= 1;
+  config.formIds = config.formIds.filter((id) => id !== formId);
+
+  if (config.refCount <= 0) {
+    delete storage.configs[configHash]; // 无引用时删除配置
+  }
+
+  delete storage.formMapping[formId];
+  saveStorage(storage);
+};
+```
+
+### 7.3 使用流程
+
+#### 7.3.1 创建广告
+
+```typescript
+const handleCreate = async (formValues: AdFormValues) => {
+  const processedData = await processFormData(formValues);
+
+  // 1. 创建广告
+  await createApi(processedData);
+
+  // 2. 缓存表单配置
+  cacheFormConfig(processedData.id, currentFieldConfig);
+};
+```
+
+#### 7.3.2 编辑/复制广告
+
+```typescript
+const { data: config = undefined, loading } = useRequest(
+  async () => {
+    const rawConfig = initialValues
+      ? getCachedFormConfig(initialValues.sourceId || initialValues.id)
+      : await getFormConfig();
+    return {
+      rawConfig,
+      processedConfig: processRules(rawConfig),
+    };
+  },
+  {
+    refreshDeps: [initialValues?.id],
+    cacheKey: initialValues?.id
+      ? `form-config-${initialValues.id}`
+      : "form-config-new",
+  }
+);
+```
+
+#### 7.3.3 删除广告
+
+```typescript
+const handleDelete = async (adId: string) => {
+  // 1. 删除广告
+  await deleteApi(adId);
+
+  // 2. 清理配置缓存
+  removeFormConfig(adId);
+};
+```
+
+### 7.4 设计优势
+
+#### 7.4.1 性能优化
+
+- ✅ **哈希去重**：相同配置只存储一份，节省空间
+- ✅ **引用计数**：自动清理未使用的配置
+- ✅ **懒加载**：仅在编辑时加载配置
+
+#### 7.4.2 数据一致性
+
+- ✅ **配置隔离**：每个广告使用独立的配置快照
+- ✅ **向后兼容**：旧广告始终能正确展示和编辑
+- ✅ **自动同步**：创建/删除时自动维护缓存
+
+#### 7.4.3 可维护性
+
+- ✅ **解耦设计**：缓存逻辑与业务逻辑分离
+- ✅ **易于测试**：纯函数实现，便于单元测试
+- ✅ **易于扩展**：可轻松添加缓存过期、压缩等功能
+
+### 7.5 缓存流程图
+
+```
+创建广告
+    ↓
+生成配置哈希
+    ↓
+检查是否存在相同配置
+    ├─ 存在 → 引用计数 +1
+    └─ 不存在 → 创建新配置
+    ↓
+保存 formId → configHash 映射
+    ↓
+存储到 LocalStorage
+```
+
+```
+编辑广告
+    ↓
+根据 formId 查找 configHash
+    ↓
+获取缓存的配置
+    ├─ 存在 → 使用缓存配置
+    └─ 不存在 → 使用当前配置
+    ↓
+渲染动态表单
+```
+
+```
+删除广告
+    ↓
+根据 formId 查找 configHash
+    ↓
+引用计数 -1
+    ↓
+检查引用计数
+    ├─ > 0 → 保留配置
+    └─ = 0 → 删除配置
+    ↓
+删除 formId → configHash 映射
+    ↓
+更新 LocalStorage
+```
+
+---
+
+## 8. 总结
+
+### 8.1 技术亮点
 
 1. ✅ **TypeScript 全栈开发**，类型安全
 2. ✅ **动态表单配置系统**，灵活可扩展
-3. ✅ **数据处理管道模式**，解耦业务逻辑
-4. ✅ **配置下发点击事件流处理**，灵活可扩张
+3. ✅ **历史配置缓存机制**，保证数据完整性
+4. ✅ **数据处理管道模式**，解耦业务逻辑
+5. ✅ **智能事件流处理**，灵活可扩展
 
 ### 7.2 项目价值
 
@@ -802,6 +1042,6 @@ const VideoPlayer = ({ videoResource, onEnded }) => {
 
 ---
 
-**文档版本**: v1.0  
-**最后更新**: 2025-12-08
+**文档版本**: v1.1  
+**最后更新**: 2025-12-16
 **作者**: jet-isnt-haha
